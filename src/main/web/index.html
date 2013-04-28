@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Alveo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="minimum-scale=1,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="css/app-run-gradle-updateincludes.css" rel="stylesheet" type="text/css">
+    <script src="js/ext/popcorn-complete.js"></script>
+    <script src="js/ext/jquery-2.0.0.js"></script>
+    <script src="js/ext/sockjs-0.3.4.js"></script>
+    <script src="js/ext/vertxbus.js"></script>
+    <!--
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+    <script src="js/jquery.ui.touch-punch.min.js"></script>
+    -->
+    <script src="js/app-run-gradle-updateincludes.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/log.js"></script>
+    <!--
+    <script src="../components/jquery/jquery.min.js"></script>
+    <script src="../components/jquery-ui/ui/minified/jquery.ui.core.min.js"></script>
+    <script src="../components/jquery-ui/ui/minified/jquery.ui.widget.min.js"></script>
+    <script src="../components/jquery-ui/ui/minified/jquery.ui.mouse.min.js"></script>
+    <script src="../components/jquery-ui/ui/minified/jquery.ui.position.min.js"></script>
+    <script src="../components/jquery-ui/ui/minified/jquery.ui.draggable.min.js"></script>
+    <script src="http://alveo:8888/nowjs/now.js"></script>
+    <script src="../components/popcornjs/popcorn.js"></script>
+    -->
+  </head>
+  <body>
+    <div id="banner">
+      <div id="toplevelDirs" class="dirsDiv">
+        <div id="initialDirDiv" class="dirDiv">Begin directory navigation</div>
+      </div>
+    </div>
+    <div id="content">
+      <div id="list">
+        <div id="vidsDiv" style="display:none;" class="vidsDiv"></div>
+      </div>
+      <div id="footer">
+        <div id="footerTop" class="footerTop"></div>
+        <div id="footerLeft" class="footerLeft"></div>
+        <div id="footerMain" class="footerMain">
+          <video id="video" controls>
+            <source id="source" src=""></source>
+            Please update your browser (video element is unsupported).
+          </video>
+          <div id="vidDetails">No metadata has been found for this video.</div>
+          <div id="vidcontrols">
+            <!-- <button onclick="document.getElementById('video').play();">Play</button> -->
+            <button id="playButton">Play</button>
+            <button onclick="document.getElementById('video').pause();">Pause</button>
+            <button onclick="document.getElementById('video').volume+=0.1;">Volume+</button>
+            <button onclick="toggleVolume(document.getElementById('video').volume);">Mute</button>
+            <button onclick="document.getElementById('video').volume-=0.1;">Volume-</button>
+            <!-- <button onclick="document.getElementById('video').pause();document.getElementById('video').src='';">Stop</button> -->
+            <button onclick="document.getElementById('video').pause();">Stop</button>
+          </div>
+          <!-- <div id="footnote" style="display:none;"></div> -->
+        </div>
+        <div id="footerRight" class="footerRight"></div>
+      </div>
+    </div>
+    <div id="consoleWrapper">
+    <!-- <div id="consoleToggle"></div> -->
+      <div id="console"></div>
+    </div>
+    <div id="fullscreen" onclick="fullscreen();">Request fullscreen</div>
+    <script>
+    /*
+    // websockets
+    document.addEventListener("DOMContentLoaded", function () { // ensure the web page (DOM) has loaded 
+      var ws = new WebSocket("ws://localhost:8888/ws/echo");
+      ws.onopen = function(event) {
+        console.log("websocket opened");
+        ws.send("Hello World");
+      };
+      ws.onmessage = function(event) {
+        console.log("Received data from websocket:");
+        console.log(event);
+      };
+      ws.onclose = function(event) {
+        console.log("Web Socket closed");
+      };
+    },false);
+    */
+    //sockjs 
+    var sock = new SockJS('http://localhost:8888/ws/echo');
+    sock.onopen = function() {
+      console.log('open');
+    };
+    sock.onmessage = function(e) {
+      console.log('message', e.data);
+    };
+    sock.onclose = function() {
+      console.log('close');
+    };
+    // vertx bus connection 
+    var eb = new vertx.EventBus('http://localhost:8080/eventbus');
+    eb.onopen = function() {
+      eb.registerHandler('address', function(message) {
+        console.log('message received: ' + JSON.stringify(message));
+      });
+      eb.send('address', {name: 'josh', userid: 13474});
+    }
+    </script>
+  </body>
+</html>

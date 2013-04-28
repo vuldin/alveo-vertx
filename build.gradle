@@ -1,0 +1,110 @@
+buildscript {
+  repositories{
+    mavenCentral()
+  }
+  dependencies{
+    classpath 'com.eriwen:gradle-js-plugin:1.5.0'
+    classpath 'org.ccil.cowan.tagsoup:tagsoup:1.2.1'
+    //classpath 'groovy.xml.StreamingMarkupBuilder:
+  }
+}
+
+version='1.0-SNAPSHOT'
+def junitVersion='4.8.2'
+def vertxVersion='1.3.1.final'
+def jqueryVersion='1.9.1'
+def sockjsVersion='0.3.min'
+//def jsSrcDir='src/main/web/js'
+def jsSrcDir=new File('src/main/web/js')
+def jsBuildDir=new File("${buildDir}/web/js")
+
+//defaultTasks 'gzipJs', 'fetchHtml'
+
+apply plugin:'java'
+apply plugin:'eclipse'
+repositories{
+  mavenCentral()
+  mavenRepo(name:"JQuery",url:"http://code.jquery.com"){
+    pattern="[module]-[revision](.[classifier]).[ext]"
+  }
+  // likely need to add sockjs repo (github) and popcornjs
+}
+configurations{
+  js
+  // likely need to add/change js config to handle more than jquery
+}
+dependencies{
+  testCompile "junit:junit:${junitVersion}"
+  compile "org.vert-x:vertx-core:${vertxVersion}","org.vert-x:vertx-platform:${vertxVersion}"
+  js group:'jquery',name:'jquery',version:"${jqueryVersion}",classifier:'min',ext:"js"
+  // add sockjs and popcornjs info
+}
+
+apply plugin:'js'
+// js plugin implementations
+combineJs{
+  source=fileTree(jsSrcDir)
+  dest=file("${jsBuildDir}/alveo.js")
+}
+minifyJs{
+  source=combineJs
+  dest=file("${jsBuildDir}/alveo.min.js")
+  closure{
+    warningLevel='QUIET'
+  }
+}
+gzipJs{
+  source=minifyJs
+  dest=file("${jsBuildDir}/alveo-${version}.min.js")
+}
+// custom js functions
+task fetchJs(type:Copy){
+  description='fetches js lib dependencies (jquery, etc.) and copies to build'
+  from configurations.js
+  into "${jsBuildDir}/ext"
+}
+/*
+NodeChild.metaClass.toXmlString = {
+  def self = delegate
+  new StreamingMarkupBuilder().bind {
+    delegate.mkp.xmlDeclaration() // Use this if you want an XML declaration
+    delegate.out << self
+  }.toString()
+}
+*/
+task fetchHtml{
+  description='fetches html from project, modifies includes, copies new files to build'
+  inputs.dir file("${projectDir}/src/main/web")
+  outputs.dir file("${buildDir}/web")
+  //outputs.files files("${projectDir}/src/main/web/index.html")
+  //def newHtmlFile=new File("${buildDir}/web/index.html")
+  def parser=new org.ccil.cowan.tagsoup.Parser()
+  def slurper=new XmlSlurper(parser)
+  //def oldroot=slurper.parse(file("${projectDir}/src/main/web/index.html"))
+  def oldroot=slurper.parse("${projectDir}/src/main/web/index.html")
+  //println oldroot.text()
+  oldroot.'**'.findAll{
+    it.name()=='script' // || it.name() == 'select'
+  }.each{
+    if(it.attributes().get('src')!=null){
+      if(it.attributes().get('src').contains('layout')){
+        println 'found script element'
+        //println it.name()
+        println it.attributes().get('src')
+        println it.toString()
+        //oldroot.remove(it)
+        //it.replaceNode(null)
+        
+      }
+    }
+  }
+  println 'printing remaining includes'
+  oldroot.'**'.findAll{
+    it.name()=='script' // || it.name() == 'select'
+  }.each{
+    println it.attributes().get('src')
+  }
+  //println oldroot.html[0].head[0].title[0]
+  //new File("${buildDir}/web").mkdirs()
+  //newHtmlFile.write(newHtml)
+}
